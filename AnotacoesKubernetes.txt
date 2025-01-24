@@ -1,0 +1,137 @@
+****Kubernetes****
+
+**Componentes:
+*Control Plane:
+etcd - guarda todo o estado do seu cluster, é como se fosse o cérebro do cluster
+kube api server - O unico que conversa com o etcd, é aonde rola toda a comunicação do cluster
+kube scheduler - é o controlador do cluster, ele que sabe aonde pode colocar cada container e agendamentos de tarefas
+kube controller manager - Controla e gerencia deployments, replicas sets e demais componentes
+
+*Workers:
+kubelet - é um agente que roda em todo nó do kubernetes
+kubeproxy - todo qualquer nó ou node possui esse componentes, é o proxy do kubernetes
+
+*Portas TCP e UDP dos componentes do Kubernetes:
+Kube-ApiServer = TCP 6443
+etcd = TCP 2379,2380
+Kubelet = TCP 10250
+Kube-Scheduler = TCP 10251
+Kube-Controller = TCP 10252
+NodePort = TCP 30000-32767
+Weave Net = 6783-6784 TCP/UDP
+
+*Componentes do dia-a-dia do Kubernetes
+
+Pod - podem conter um ou mais containers que compartilham as mesmas configuraçãos de ip e configuraçãos do mesmo pod
+Replica set - é um controller dos pods que é criado juntos com o deployment, sempre que um pod cai é ele que é reponsavel para subir um novo pod para assumir
+Deployment - é o controller dos pods, onde é definida todas as informações de quantas replicas um pode deve ter e demais configurações de memoria ram e potencia de núcleo
+Service - é reponsável por expor esses pods para fora do nó do cluster
+
+*Instalando cluster Kind no Ubuntu
+
+# For AMD64 / x86_64
+[ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.26.0/kind-linux-amd64
+chmod +x ./kind
+sudo mv ./kind /usr/local/bin/kind
+
+*Instalando Docker para poder rodar o Kind
+
+curl -fsSL https://get.docker.com | bash
+
+*Criando cluster inicial com Kind
+
+king create cluster
+testando o cluster criado - kubectl get nodes
+
+*Apagando o cluster inicial
+kind delete cluster
+
+*Criando cluster com kind multi-nodes
+
+Criar arquivo kind-cluster.yaml e adicionar o seguinte texto:
+kind: cluster
+apiVersion: king.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+- role: worker
+- role: worker
+
+após criar o arquivo, realizar o seguinte comando para criar no
+kind customizado
+
+king create cluster --config king-cluster.yaml --name giropops
+
+*Iniciando a utilizar o cluster
+
+#Lista todos os pods
+kubectl get pods
+
+#Traz todos os pods importantes do kube-system
+kubectl get pods -n kube-system
+
+#Traz todos os pods importantes do kube-system com mais detalhes
+kubectl get pods -n kube-system -o wide
+
+#Traz todos os pods
+kubectl get pods -A
+
+#Traz todos os deployments
+kubectl get deployment -A
+
+#Traz todos os services
+kubectl get service -A
+
+#Traz todos os replicaset
+kubectl get replicaset -A
+
+#Instalando o bash completion no Ubuntu
+apt install bash-completion
+
+#Instalando o bash completion no kubectl
+kubectl completion --help
+
+## Adicionando o bash completion no kubernetes
+
+source /etc/bash_completion
+kubectl completion bash > ~/.kube/completion.bash.inc
+printf "
+# kubectl shell completion
+source '$HOME/.kube/completion.bash.inc'
+" >> $HOME/.bash_profile
+source $HOME/.bash_profile
+
+## Criando nosso primeiro pod
+kubectl run giropops --image=nginx --port=80
+
+## Acessando o bash do container
+kubectl exec -it giropops -- /bin/bash
+
+## Deletar o Pod
+kubectl delete pods giropops
+
+## Criando um service para o pod giropops
+kubectl run giropops --image=nginx --port=80
+kubectl expose pods giropops
+
+## Adicionando alias no kubectl
+vim /root/.bash_profile
+
+Adicionar  na ultima linha:
+alias k="kubectl"
+
+## Para testar a criacão de um pod sem ter que cria-lo
+kubectl run --image=nginx --port=80 giropops --dry-run=client
+
+## Obter yaml de um pod utilizando o método de dry-run
+kubectl run --image=nginx --port=80 giropops --dry-run=client -o yaml > pod.yaml
+
+## Criar um pod a partir de um yaml obtido pelo dry-run
+kubectl apply -f pod.yaml
+
+
+
+
+
+
+
+
