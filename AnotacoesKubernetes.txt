@@ -1,4 +1,5 @@
 ****Kubernetes****
+###AULA01###
 
 **Componentes:
 *Control Plane:
@@ -93,12 +94,30 @@ kubectl completion --help
 ## Adicionando o bash completion no kubernetes
 
 source /etc/bash_completion
-kubectl completion bash > ~/.kube/completion.bash.inc
+kubectl completion bash > /root/.kube/completion.bash.inc
 printf "
 # kubectl shell completion
-source '$HOME/.kube/completion.bash.inc'
-" >> $HOME/.bash_profile
-source $HOME/.bash_profile
+source '/root/.kube/completion.bash.inc'
+" >> /root/.bash_profile
+source /root/.bash_profile
+
+** Ou utilize esse exemplo a seguir:
+kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
+echo 'alias k=kubectl' >>~/.bashrc
+echo 'complete -o default -F __start_kubectl k' >>~/.bashrc
+
+  # Installing bash completion on Linux
+  ## If bash-completion is not installed on Linux, install the 'bash-completion' package
+  ## via your distribution's package manager.
+  ## Load the kubectl completion code for bash into the current shell
+  source <(kubectl completion bash)
+  ## Write bash completion code to a file and source it from .bash_profile
+  kubectl completion bash > ~/.kube/completion.bash.inc
+  printf "
+  # kubectl shell completion
+  source '$HOME/.kube/completion.bash.inc'
+  " >> $HOME/.bash_profile
+  source $HOME/.bash_profile
 
 ## Criando nosso primeiro pod
 kubectl run giropops --image=nginx --port=80
@@ -127,6 +146,192 @@ kubectl run --image=nginx --port=80 giropops --dry-run=client -o yaml > pod.yaml
 
 ## Criar um pod a partir de um yaml obtido pelo dry-run
 kubectl apply -f pod.yaml
+
+###AULA02###
+Desafio que não rolou :(
+    Meuprimeirocluster.yaml
+    Criar um cluster kubernetes usando kind
+    1 control plane
+    3 workers
+    Deployar o nginx
+
+Definição do pod:
+O pod é a menor unidade do Kubernetes
+O pod pode conter mais de um container caso seja necessário
+Um pod com dois containers se falam por localhost
+Dois pods diferentes se comunicam por IP
+
+##Descreve todas as informações do pod 
+kubectl describe pods nomedopod
+
+##Pegar as informações do Yaml de um pod
+kubectl get pods giropops -o yaml
+
+##Pegar todos os dados de pods de forma ampla
+kubectl get pods -o wide
+
+##Atachar em um pod para obter acesso
+kubectl attach nomepod -c nomecontainer -ti
+
+##Executar um comando para abrir um terminal no pod
+kubectl exec -ti nomedopod /bin/bash
+
+##Executar um pod dry-run(verifica se o pod consegue ser criado, mas não cria o pod)
+kubectl run nomedopod --image alpine ou qualquer outra --dry-run=client
+
+##Executar um pod dry-run para e exibir o retorno do pod em yaml para pegar os dados de criação de um pod
+kubectl run nomedopod --image alpine ou qualquer outra --dry-run=client -o yaml
+
+## Editando o pod
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: girus
+    service: webserver
+  name: girus
+spec:
+  containers:
+  - image: nginx
+    name: girus
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+
+##Aplicando um manifesto para criar um pod
+kubectl create -f pod.yaml
+
+##Atualizando um manifesto no pod ou criando caso não exista o pod
+kubectl apply -f pod.yaml
+
+##Obtendo a descrição de execução do pod
+kubectl describe pods nomedopod
+
+##Obtendo o log de um pod
+kubectl logs nomedopod
+
+##Obtendo o log de um pod em tempo realizar
+kubectl logs nomedopod -f
+
+##Obtendo o log de um pod e especificando um container em especificando
+kubectl logs nomedopod -c nomedocontainer
+
+##Pod criado no final da aula 2
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: girus
+    service: webserver
+  name: girus
+spec:
+  containers:
+  - image: nginx
+    name: nginx
+    resources: {}
+  - image: busybox
+    name: busybox
+    args:
+    - sleep
+    - "600"
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+
+##Pod limitado
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: giropops
+  name: girus
+spec:
+  containers:
+  - image: ubuntu
+    name: ubuntu
+    args:
+    - sleep
+    - "1800"
+    resources:
+      limits:
+        cpu: "0.5"
+        memory: "128Mi"
+      requests:
+        cpu: "0.3"
+        memory: "64Mi"
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+
+  ##Criando um pod com volume persistente com emptyDir
+
+  apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: giropops
+  name: girus
+spec:
+  containers:
+  - image: nginx
+    name: webserver
+    volumeMounts:
+    - mountPath: /giropops
+      name: volume-emptydir
+    resources:
+      limits:
+        cpu: "0.5"
+        memory: "128Mi"
+      requests:
+        cpu: "0.3"
+        memory: "64Mi"
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  volumes:
+  - name: volume-emptydir
+    emptyDir:
+      sizeLimit: 256Mi
+
+## ** Importante: Caso o pod seja removido o volume vai ser perdido, se o pod for restartado ele vai manter os dados do volume
+
+### DAY 3 ###
+
+##Criando nosso primeiro deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-deployment
+  name: nginx-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-deployment
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        resources:
+          limits:
+            cpu: 0.5
+            memory: 256Mi
+          requests:
+            cpu: 0.3
+            memory: 64Mi
+
+
+##O Atributo de label é uma especificação muito importante para organização do cluster kubernetes
+
+kubectl get pods -l app=nginx-deployment
+
+
+
+
 
 
 
